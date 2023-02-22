@@ -39,6 +39,8 @@ void setup_ir_temp();
 /*******************************************************/
 void setup_amb_temp();
 
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 /*******************************************************/
 /******** Functie setup apelata inainte de loop ********/
 /*******************************************************/
@@ -50,6 +52,15 @@ void setup()
 
   setup_ir_temp();
   setup_amb_temp();
+
+  lcd.init();
+  lcd.clear();         
+  lcd.backlight();      //
+  lcd.setCursor(2,0);   //Set cursor to character 2 on line 0
+  lcd.print("Hello world!");
+  
+  lcd.setCursor(2,1);   //Move cursor to character 2 on line 1
+  lcd.print("LCD Tutorial");
 }
 
 /*******************************************************/
@@ -57,37 +68,6 @@ void setup()
 /*******************************************************/
 void loop() 
 {
-//  // Call therm.read() to read object and ambient temperatures from the sensor.
-//  unsigned long before;
-//  unsigned long after;
-//  
-//  before = millis(); 
-//  if (ir_temp2.read()) // On success, read() will return 1, on fail 0.
-//  {
-//    // Use the object() and ambient() functions to grab the object and ambient
-//	// temperatures.
-//	// They'll be floats, calculated out to the unit you set with setUnit().
-// 
-//    float tempAmb = ir_temp1.ambient();
-//    float tempObj = ir_temp1.object();
-//
-//    Serial.print("Object: " + String(tempObj, 2));
-//    Serial.println("C");
-//    Serial.print("Ambient: " + String(tempAmb, 2));
-//    Serial.println("C");
-//
-//  }
-//  after = millis();
-//  Serial.println("Read took -> " + String(after - before) + "ms");
-//  Serial.println();
-//  Serial.println();
-//  Serial.println();
-//     
-//  delay(1000);
-
-
-   unsigned long before;
-   unsigned long after;
    before = millis();
    int temp1 = amb_temp1.readTemperature();
    int temp2 = amb_temp2.readTemperature();
