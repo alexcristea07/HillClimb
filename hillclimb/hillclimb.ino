@@ -14,7 +14,7 @@
 /****** Pini senzorilor de temperatura ambientala ******/
 /*******************************************************/
 #define AMB_PIN_1       14 // Cod GPIO 14 <-> Pin D5 pe NodeMCU
-#define AMB_PIN_2       13 // Cod GPIO 13 <-> Pin D7 pe NodeMCU
+#define AMB_PIN_2       12 // Cod GPIO 12 <-> Pin D7 pe NodeMCU
 
 /*******************************************************/
 /****** Globale senzori de temperatura infra-rosu ******/
@@ -68,10 +68,23 @@ void setup()
 /*******************************************************/
 void loop() 
 {
-   before = millis();
    int temp1 = amb_temp1.readTemperature();
    int temp2 = amb_temp2.readTemperature();
-   after = millis();
+
+   if (!ir_temp1.read())
+     Serial.println("IR Senzor1 eroare citire");
+   if (!ir_temp2.read())
+     Serial.println("IR Senzor1 eroare citire");
+   if (!ir_temp3.read())
+     Serial.println("IR Senzor1 eroare citire");  
+
+   Serial.print("IR1_temp: ");
+   Serial.println(ir_temp1.object());
+   Serial.print("IR2_temp: ");
+   Serial.println(ir_temp2.object());
+   Serial.print("IR3_temp: ");
+   Serial.println(ir_temp3.object());
+
    
    Serial.println("1: Temperature in C:"); 
    Serial.println(temp1);  
@@ -79,7 +92,6 @@ void loop()
    Serial.println("2: Temperature in C:");  
    Serial.println(temp2);  
 
-   Serial.println(after - before);
    Serial.println();
    Serial.println();
    Serial.println();
