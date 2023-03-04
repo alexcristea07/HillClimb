@@ -1,7 +1,9 @@
 
 #include <Wire.h> // I2C library
 #include <SparkFunMLX90614.h> 
- #include "DHT.h"  
+#include "DHT.h"  
+
+#include <LiquidCrystal_I2C.h>
 
 /*******************************************************/
 /* Adrese I2C ale senzorilor de temperatura infra-rosu */
@@ -14,7 +16,14 @@
 /****** Pini senzorilor de temperatura ambientala ******/
 /*******************************************************/
 #define AMB_PIN_1       14 // Cod GPIO 14 <-> Pin D5 pe NodeMCU
-#define AMB_PIN_2       12 // Cod GPIO 12 <-> Pin D7 pe NodeMCU
+#define AMB_PIN_2       12 // Cod GPIO 12 <-> Pin D6 pe NodeMCU
+
+/*******************************************************/
+/************** Adresa I2C ecranului LCD ***************/
+/*******************************************************/
+#define LCD_I2C_ADDR    0x27
+#define LCD_NUM_COLS    16
+#define LCD_NUM_ROWS    2
 
 /*******************************************************/
 /****** Globale senzori de temperatura infra-rosu ******/
@@ -39,8 +48,16 @@ void setup_ir_temp();
 /*******************************************************/
 void setup_amb_temp();
 
-#include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+/*******************************************************/
+/************* Declarare functii afisaj LCD ************/
+/*******************************************************/
+void setup_lcd_display();
+
+/*******************************************************/
+/****************** Globale afisaj LCD *****************/
+/*******************************************************/
+LiquidCrystal_I2C lcd(LCD_I2C_ADDR, LCD_NUM_COLS, LCD_NUM_ROWS);
+
 /*******************************************************/
 /******** Functie setup apelata inainte de loop ********/
 /*******************************************************/
@@ -52,15 +69,7 @@ void setup()
 
   setup_ir_temp();
   setup_amb_temp();
-
-  lcd.init();
-  lcd.clear();         
-  lcd.backlight();      //
-  lcd.setCursor(2,0);   //Set cursor to character 2 on line 0
-  lcd.print("Hello world!");
-  
-  lcd.setCursor(2,1);   //Move cursor to character 2 on line 1
-  lcd.print("LCD Tutorial");
+  setup_lcd_display();
 }
 
 /*******************************************************/
@@ -68,15 +77,18 @@ void setup()
 /*******************************************************/
 void loop() 
 {
-   int temp1 = amb_temp1.readTemperature();
-   int temp2 = amb_temp2.readTemperature();
+   int temp1;
+   int temp2;
+
+   temp1 = amb_temp1.readTemperature();
+   temp2 = amb_temp2.readTemperature();
 
    if (!ir_temp1.read())
      Serial.println("IR Senzor1 eroare citire");
    if (!ir_temp2.read())
-     Serial.println("IR Senzor1 eroare citire");
+     Serial.println("IR Senzor2 eroare citire");
    if (!ir_temp3.read())
-     Serial.println("IR Senzor1 eroare citire");  
+     Serial.println("IR Senzor3 eroare citire");  
 
    Serial.print("IR1_temp: ");
    Serial.println(ir_temp1.object());
@@ -97,6 +109,12 @@ void loop()
    Serial.println();
    delay(1000);  
 
+  lcd.clear();
+  lcd.setCursor(2,0);   //Set cursor to character 2 on line 0
+  lcd.print("Hello world!");
+  
+  lcd.setCursor(2,1);   //Move cursor to character 2 on line 1
+  lcd.print("LCD Tutorial");
 }
 
 /*******************************************************/
@@ -134,4 +152,16 @@ void setup_amb_temp()
 {
   amb_temp1.begin();
   amb_temp2.begin();
+}
+
+
+/*******************************************************/
+/************** Functie setup afisaj LCD ***************/
+/*******************************************************/
+void setup_lcd_display()
+{
+
+  lcd.init();
+  lcd.clear();         
+  lcd.backlight();
 }
