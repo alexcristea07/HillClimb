@@ -36,6 +36,13 @@
 #define LCD_NUM_ROWS    2
 
 /*******************************************************/
+/****************** Macros modul GSM *******************/
+/*******************************************************/
+#define GSM_LOOPS    8 // Modulul va trimite SMS o data la GSM_LOOPS rulari ale
+                          // buclei de procesare
+#define GSM_DEST_NUMBER "+40721345327"
+
+/*******************************************************/
 /********** Interval rulare bucla procesare ************/
 /*******************************************************/
 #define ACTION_TIMER    0.5 // Interval (in secunde) folosit pentru executia callback-ului
@@ -59,6 +66,11 @@ int amb_temp_val[AMB_TEMP_NUM];
 /*******************************************************/
 LiquidCrystal_I2C lcd(LCD_I2C_ADDR, LCD_NUM_COLS, LCD_NUM_ROWS);
 int lcd_loop_cnt = 0;
+
+/*******************************************************/
+/****************** Globale modul GSM  *****************/
+/*******************************************************/
+unsigned int gsm_counter = 0;
 
 /*******************************************************/
 /*************** Globale timer hardware ****************/
@@ -96,6 +108,7 @@ void update_lcd_display();
 /************* Declarare functii modul GSM *************/
 /*******************************************************/
 void setup_gsm_uart();
+void send_sms_gsm_uart();
 
 /*******************************************************/
 /******** Functie setup apelata inainte de loop ********/
@@ -128,6 +141,7 @@ void loop()
   read_amb_temp();
   read_ir_temp();
   update_lcd_display();
+  send_sms_gsm_uart();
 
 #ifdef SERIAL_DEBUG
   Serial.println();
@@ -195,6 +209,7 @@ void setup_gsm_uart()
   delay(300);
   Serial.println("AT\n");
   delay(300);
+  Serial.println("AT+CMGF=1");    // Seteaza mod text pentru SMS-uri
   while (Serial.available() > 0)  // Curata tot ce a venit pe seriala pana in acest moment, inclusiv raspunsurile "OK" care vin pt 
     Serial.read();                //   comenzile AT date anterior.
 }
@@ -283,4 +298,29 @@ void update_lcd_display()
     lcd.print(line);
   }
   lcd_loop_cnt = (lcd_loop_cnt + 1) % LCD_LOOPS;
+}
+
+/*******************************************************/
+/**************** Functie trimitere SMS  ***************/
+/*******************************************************/
+void send_sms_gsm_uart()
+{
+  if ((gsm_counter % GSM_LOOPS) == 0)
+  {
+    int i;
+    String sms_content = "";
+    for (i = 0; i < IR_TEMP_NUM; i++)
+      sms_content += String(ir_temp_val[i]) + " ";
+    for (i = 0; i < AMB_TEMP_NUM; i++)
+      sms_content += String(amb_temp_val[i]) + " ";
+
+#ifndef SERIAL_DEBUG // Daca UART-ul e folosit pentru debug, inseamna ca modulul GSM e deconectat
+    Serial.print("AT+CMGS=\"" + String(GSM_DEST_NUMBER) + "\"\r");
+    delay(50);
+    Serial.print(sms_content + "\r");
+    delay(50);
+    Serial.write(0x1a);
+#endif
+  }
+  gsm_counter = (gsm_counter + 1) % GSM_LOOPS;
 }
