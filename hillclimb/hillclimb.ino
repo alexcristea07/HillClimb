@@ -11,7 +11,7 @@
 //#define SERIAL_DEBUG
 
 /*******************************************************/
-/* Adrese I2C ale senzorilor de temperatura infra-rosu */
+/************ Macros senzori temperatura IR ************/
 /*******************************************************/
 #define IR_TEMP_NUM     3
 #define IR_I2C_ADDR1    0x5A
@@ -20,7 +20,7 @@
 #define IR_ERR_THRESH   25
 
 /*******************************************************/
-/****** Pini senzorilor de temperatura ambientala ******/
+/****** Macros senzori de temperatura ambientala *******/
 /*******************************************************/
 #define AMB_TEMP_NUM    2
 #define AMB_PIN_1       14 // Cod GPIO 14 <-> Pin D5 pe NodeMCU
@@ -28,7 +28,7 @@
 #define AMB_ERR_THRESH  25
 
 /*******************************************************/
-/************** Adresa I2C ecranului LCD ***************/
+/**************** Macros ecranului LCD *****************/
 /*******************************************************/
 #define LCD_LOOPS       2
 #define LCD_I2C_ADDR    0x27
@@ -36,7 +36,7 @@
 #define LCD_NUM_ROWS    2
 
 /*******************************************************/
-/************** Adresa I2C ecranului LCD ***************/
+/********** Interval rulare bucla procesare ************/
 /*******************************************************/
 #define ACTION_TIMER    0.5 // Interval (in secunde) folosit pentru executia callback-ului
                             // pe timer hardware
