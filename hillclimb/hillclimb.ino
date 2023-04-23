@@ -8,7 +8,14 @@
 
 #include <Ticker.h>
 
-//#define SERIAL_DEBUG
+//#define USE_SERIAL0_DEBUG
+
+#ifdef USE_SERIAL0_DEBUG  // Nu ar trebui sa fie folosit, UART0 e folosit pt comunicatia cu modulul GSM
+# define LOG Serial
+#else
+# define LOG Serial1      // Debug-ul (log consola) foloseste UART1, care are doar pin TX, insa e suficient
+#endif                    // pentru ca NodeMCU sa trimita log catre consola seriala
+                          // PIN TX UART1: D4
 
 /*******************************************************/
 /************ Macros senzori temperatura IR ************/
@@ -38,14 +45,14 @@
 /*******************************************************/
 /****************** Macros modul GSM *******************/
 /*******************************************************/
-#define GSM_LOOPS    8 // Modulul va trimite SMS o data la GSM_LOOPS rulari ale
+#define GSM_LOOPS    4 // Modulul va trimite SMS o data la GSM_LOOPS rulari ale
                           // buclei de procesare
 #define GSM_DEST_NUMBER "+40721345327"
 
 /*******************************************************/
 /********** Interval rulare bucla procesare ************/
 /*******************************************************/
-#define ACTION_TIMER    0.5 // Interval (in secunde) folosit pentru executia callback-ului
+#define ACTION_TIMER    1 // Interval (in secunde) folosit pentru executia callback-ului
                             // pe timer hardware
 
 /*******************************************************/
@@ -115,7 +122,10 @@ void send_sms_gsm_uart();
 /*******************************************************/
 void setup() 
 {
-  Serial.begin(115200); // Initialize Serial to log output
+  Serial.begin(115200);
+#ifndef USE_SERIAL0_DEBUG // Daca folosim UART1 pentru debug (USE_SERIAL0_DEBUG -> nedefinit), atunci
+  Serial1.begin(115200);  // e necesar sa initializam si pe UART1
+#endif
   Wire.begin(); //Joing I2C bus
   Serial.println();
 
@@ -143,9 +153,7 @@ void loop()
   update_lcd_display();
   send_sms_gsm_uart();
 
-#ifdef SERIAL_DEBUG
-  Serial.println();
-#endif
+  LOG.println();
 }
 
 /*******************************************************/
@@ -157,21 +165,21 @@ void setup_ir_temp()
   int i;
   ret = ir_temp[0].begin(IR_I2C_ADDR1);
   if (ret == false) {
-    Serial.println("Senzor IR1 eroare initializare");
+    LOG.println("Senzor IR1 eroare initializare");
   }
   if (!ret)
     ir_temp[0].setUnit(TEMP_C); // Seteaza grade Celsius ca unitate de masura
     
   ret = ir_temp[1].begin(IR_I2C_ADDR2);
   if (ret == false) {
-    Serial.println("Senzor IR2 eroare initializare");
+    LOG.println("Senzor IR2 eroare initializare");
   }
   if (!ret)
     ir_temp[1].setUnit(TEMP_C); // Seteaza grade Celsius ca unitate de masura
 
   ret = ir_temp[2].begin(IR_I2C_ADDR3);
   if (ret == false) {
-    Serial.println("Senzor IR3 eroare initializare");
+    LOG.println("Senzor IR3 eroare initializare");
   }
   if (!ret)
     ir_temp[2].setUnit(TEMP_C); // Seteaza grade Celsius ca unitate de masura
@@ -224,22 +232,18 @@ void read_ir_temp()
   {
     if (!ir_temp[i].read())
     {
-#ifdef SERIAL_DEBUG
-      Serial.print("IR Senzor");
-      Serial.print(i);
-      Serial.println(" eroare citire");
-#endif
+      LOG.print("IR Senzor");
+      LOG.print(i);
+      LOG.println(" eroare citire");
       ir_temp_val[i] = 0;
     }
     else
     {
       ir_temp_val[i] = ir_temp[i].object();
-#ifdef SERIAL_DEBUG
-      Serial.print("IR");
-      Serial.print(i);
-      Serial.print("_temp: ");
-      Serial.println(ir_temp_val[i]);
-#endif
+      LOG.print("IR");
+      LOG.print(i);
+      LOG.print("_temp: ");
+      LOG.println(ir_temp_val[i]);
     }
   }
 }
@@ -252,12 +256,10 @@ void read_amb_temp()
   amb_temp_val[0] = amb_temp1.readTemperature();
   amb_temp_val[1] = amb_temp2.readTemperature();
   
-#ifdef SERIAL_DEBUG
-  Serial.print("AMB0_temp: ");
-  Serial.println(amb_temp_val[0]);
-  Serial.print("AMB1_temp: ");
-  Serial.println(amb_temp_val[1]);
-#endif
+  LOG.print("AMB0_temp: ");
+  LOG.println(amb_temp_val[0]);
+  LOG.print("AMB1_temp: ");
+  LOG.println(amb_temp_val[1]);
 }
 
 /*******************************************************/
@@ -314,13 +316,11 @@ void send_sms_gsm_uart()
     for (i = 0; i < AMB_TEMP_NUM; i++)
       sms_content += String(amb_temp_val[i]) + " ";
 
-#ifndef SERIAL_DEBUG // Daca UART-ul e folosit pentru debug, inseamna ca modulul GSM e deconectat
     Serial.print("AT+CMGS=\"" + String(GSM_DEST_NUMBER) + "\"\r");
     delay(50);
     Serial.print(sms_content + "\r");
     delay(50);
     Serial.write(0x1a);
-#endif
   }
   gsm_counter = (gsm_counter + 1) % GSM_LOOPS;
 }
