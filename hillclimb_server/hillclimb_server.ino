@@ -18,7 +18,7 @@
 /*******************************************************/
 /**** Structura ce stocheaza cele 5 valori numerice ****/
 /*******************************************************/
-struct Sensors {
+struct SensorsData {
   int ir0;
   int ir1;
   int ir2;
@@ -39,7 +39,7 @@ unsigned int displayall = 0; // Dupa prima umplere cu date, aceasta variabila de
                              // La request de afisare in web, daca valoarea ei e 0, atunci afiseaza
                              //   din vectorul de structuri pana la valoarea globalei 'arrindex', altfel
                              //   afiseaza toate valorile (cele vechi vor fi suprascrise)
-Sensors values[MAX_RECORD_VALUES];
+SensorsData values[MAX_RECORD_VALUES];
 
 /*******************************************************/
 /****************** Macros modul GSM *******************/
@@ -164,16 +164,20 @@ void recv_sms_process()
       memcpy(data, &content[pozFirstNewline + 1], pozSecondNewline - pozFirstNewline - 1);
       data[pozSecondNewline - pozFirstNewline - 1] = '\0';
 
+      /*
       LOG.print("data: ");
       LOG.println(data);
+      */
 
       if (recv_sms_extract_values(data, storage) == GSM_NUM_SENSOR_VALUES)
       {
         // Am gasit cele 5 valori, le pot afisa;
+        /*
         for (int i = 0; i < GSM_NUM_SENSOR_VALUES; i++)
         {
           LOG.println("val[" + String(i) + "] -> " + String(storage[i]));
         }
+        */
 
         // Adaug in buffer circular
       }
