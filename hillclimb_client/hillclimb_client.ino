@@ -30,7 +30,7 @@
 /****** Macros senzori de temperatura ambientala *******/
 /*******************************************************/
 #define AMB_TEMP_NUM    2
-#define AMB_PIN_1       14 // Cod GPIO 14 <-> Pin D5 pe NodeMCU
+#define AMB_PIN_1       13 // Cod GPIO 13 <-> Pin D5 pe NodeMCU
 #define AMB_PIN_2       12 // Cod GPIO 12 <-> Pin D6 pe NodeMCU
 #define AMB_ERR_THRESH  25
 
@@ -303,6 +303,7 @@ void update_lcd_display()
     lcd.print(line);
   }
   lcd_loop_cnt = (lcd_loop_cnt + 1) % LCD_LOOPS;
+  LOG.println(String(__func__));
 }
 
 /*******************************************************/
@@ -326,7 +327,7 @@ void send_sms_gsm_uart()
     Serial.write(0x1a);
 
     LOG.println("Sending GSM command:");
-    LOG.println("AT+CMGS=\"" + String(GSM_DEST_NUMBER) + "\"\r" + sms_content + "\r");
+    LOG.println("AT+CMGS=\"" + String(GSM_DEST_NUMBER) + "\"\n" + sms_content + "\n");
   }
   gsm_counter = (gsm_counter + 1) % GSM_LOOPS;
 }
