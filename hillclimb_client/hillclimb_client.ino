@@ -30,7 +30,7 @@
 /****** Macros senzori de temperatura ambientala *******/
 /*******************************************************/
 #define AMB_TEMP_NUM    2
-#define AMB_PIN_1       13 // Cod GPIO 13 <-> Pin D5 pe NodeMCU
+#define AMB_PIN_1       14 // Cod GPIO 14 <-> Pin D5 pe NodeMCU
 #define AMB_PIN_2       12 // Cod GPIO 12 <-> Pin D6 pe NodeMCU
 #define AMB_ERR_THRESH  25
 
