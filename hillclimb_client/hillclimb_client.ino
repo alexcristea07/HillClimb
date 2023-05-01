@@ -236,7 +236,7 @@ void read_ir_temp()
     if (!ir_temp[i].read())
     {
       LOG.print("IR Senzor");
-      LOG.print(i);
+      LOG.print(i + 1);
       LOG.println(" eroare citire");
       ir_temp_val[i] = 0;
     }
@@ -244,7 +244,7 @@ void read_ir_temp()
     {
       ir_temp_val[i] = ir_temp[i].object();
       LOG.print("IR");
-      LOG.print(i);
+      LOG.print(i + 1);
       LOG.print("_temp: ");
       LOG.println(ir_temp_val[i]);
     }
