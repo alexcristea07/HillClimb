@@ -7,6 +7,8 @@
 
 #include <Ticker.h>
 
+#include <ESP8266WiFi.h>
+
 //#define USE_SERIAL0_DEBUG
 
 #ifdef USE_SERIAL0_DEBUG  // Nu ar trebui sa fie folosit, UART0 e folosit pt comunicatia cu modulul GSM
@@ -22,24 +24,39 @@ struct SensorsData {
   int ir0;
   int ir1;
   int ir2;
+  int amb0;
   int amb1;
-  int amb2;
 };
 
 /*******************************************************/
 /************ Macros vector stocare date ***************/
 /*******************************************************/
 #define MAX_RECORD_VALUES 30
+#define AMB_ERR_THRESH  25
+#define IR_ERR_THRESH   25
 
 /*******************************************************/
 /*********** Globale vector stocare date  **************/
 /*******************************************************/
 unsigned int arrindex = 0;
-unsigned int displayall = 0; // Dupa prima umplere cu date, aceasta variabila devine 1
-                             // La request de afisare in web, daca valoarea ei e 0, atunci afiseaza
-                             //   din vectorul de structuri pana la valoarea globalei 'arrindex', altfel
-                             //   afiseaza toate valorile (cele vechi vor fi suprascrise)
+unsigned int displayall = 0;
 SensorsData values[MAX_RECORD_VALUES];
+
+/*******************************************************/
+/***************** Functii afisare web *****************/
+/*******************************************************/
+void wifi_setup(void);
+void wifi_process(void);
+
+/*******************************************************/
+/*************** Globale afisare web  ******************/
+/*******************************************************/
+WiFiServer server(80);
+String header;
+//char *ssid = "AndroidAP473C";
+//char *pass = "vywg1169";
+char *ssid = "Digi-Fara-Filaj-Adica-Safe";
+char *pass = "Parola 9 & Puternica";
 
 /*******************************************************/
 /****************** Macros modul GSM *******************/
@@ -70,6 +87,8 @@ void setup()
   Wire.begin(); //Joing I2C bus
   Serial.println();
 
+  wifi_setup();
+
   setup_gsm_uart();
 
 }
@@ -79,6 +98,8 @@ void setup()
 /*******************************************************/
 void loop() 
 {
+  wifi_process();
+
   recv_sms_process();
 }
 
@@ -103,7 +124,16 @@ void setup_gsm_uart()
   while (Serial.available() > 0)  // Curata tot ce a venit pe seriala pana in acest moment, inclusiv raspunsurile "OK" care vin pt 
     Serial.read();                //   comenzile AT date anterior.
 
-  Serial1.println("\nsetup_gsm_uart OK");
+  int i;
+  for (i = 0; i < MAX_RECORD_VALUES; i++)
+  {
+    values[i].ir0 = 0;
+    values[i].ir1 = 0;
+    values[i].ir2 = 0;
+    values[i].amb0 = 0;
+    values[i].amb1 = 0;
+  }
+  LOG.println("setup: " + String(__func__)  + " OK");
 }
 
 
@@ -179,7 +209,14 @@ void recv_sms_process()
         }
         */
 
-        // Adaug in buffer circular
+        values[arrindex].ir0 = storage[0];
+        values[arrindex].ir1 = storage[1];
+        values[arrindex].ir2 = storage[2];
+        values[arrindex].amb0 = storage[3];
+        values[arrindex].amb1 = storage[4];
+        arrindex = (arrindex + 1) % MAX_RECORD_VALUES;
+        if (arrindex == 0)
+          displayall = 1;
       }
       else
       {
@@ -188,4 +225,120 @@ void recv_sms_process()
     }
     LOG.println("GSM recv:" + content);
   }
+}
+
+/*******************************************************/
+/**************** Functie setup WiFi *******************/
+/*******************************************************/
+void wifi_setup(void) {
+  //Conectarea la Wi-FI si verificarea si afisarea Ip-ului in monitorul serial.
+  LOG.print("Se conecteaza la retea ");
+//  Serial.println(ssid);
+  LOG.print("<SSID>");
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    LOG.print(".");
+  }
+
+  server.begin();
+  LOG.println();
+  LOG.println("setup: " + String(__func__)  + " OK");
+  LOG.println(WiFi.localIP());
+}
+
+/*******************************************************/
+/************** Functie procesare WiFi *****************/
+/*******************************************************/
+void wifi_process(void) {
+  int i;
+  unsigned int last;
+  WiFiClient client = server.available();
+
+  if (!client)
+    return;
+
+  if (displayall == 0) {
+    last = arrindex;
+  }
+  else {
+    last = MAX_RECORD_VALUES;
+  }
+
+  String request = client.readStringUntil('\r');
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type:text/html");
+  client.println("Connection: close");
+  client.println();
+  client.println("<!DOCTYPE html><html>");
+  client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+  client.println("<link rel=\"icon\" href=\"data:,\">");
+  client.print("<meta http-equiv=\"refresh\" content=\"3\">"); // Refresh la fiecare 3 secunde
+  client.println("</style></head><body><h1>Monitorizare</h1>");
+
+  client.println("<table><tr><th>Index</th><th>Senzor IR1</th><th>Senzor IR2</th><th>Senzor IR3</th><th>Senzor AMB1</th> <th>Senzor AMB2</th></tr>");
+
+  for (i = 0; i < last; i++)
+  {
+    client.println("<tr>");
+
+    /* Afisare index tabel */
+    client.println("<td><span class=\"sensor\">");
+    /* Index curent e afisat cu verde */
+    if ((i + 1) == arrindex)
+      client.println("<font color=\"#0f0\">");
+    client.println(i + 1);
+    if ((i + 1) == arrindex)
+      client.println("</font>");    
+    client.println("</span></td>");
+
+    /* Afisare valoarea 1 senzori IR */
+    client.println("<td><span class=\"sensor\">");
+    if (values[i].ir0 > IR_ERR_THRESH)
+      client.println("<font color=\"#f00\">");
+    client.println(values[i].ir0);
+    if (values[i].ir0 > IR_ERR_THRESH)
+      client.println("</font>");    
+    client.println("</span></td>");
+
+    /* Afisare valoarea 2 senzori IR */
+    client.println("<td><span class=\"sensor\">");
+    if (values[i].ir1 > IR_ERR_THRESH)
+      client.println("<font color=\"#f00\">");
+    client.println(values[i].ir1);
+    if (values[i].ir1 > IR_ERR_THRESH)
+      client.println("</font>");    
+    client.println("</span></td>");
+
+    /* Afisare valoarea 3 senzori IR */
+    client.println("<td><span class=\"sensor\">");
+    if (values[i].ir2 > IR_ERR_THRESH)
+      client.println("<font color=\"#f00\">");
+    client.println(values[i].ir2);
+    if (values[i].ir2 > IR_ERR_THRESH)
+      client.println("</font>");    
+    client.println("</span></td>");
+
+    /* Afisare valoarea 1 senzori AMB */
+    client.println("<td><span class=\"sensor\">");
+    if (values[i].amb0 > AMB_ERR_THRESH)
+      client.println("<font color=\"#f00\">");
+    client.println(values[i].amb0);
+    if (values[i].amb0 > IR_ERR_THRESH)
+      client.println("</font>");    
+    client.println("</span></td>");
+
+    /* Afisare valoarea 2 senzori AMB */
+    client.println("<td><span class=\"sensor\">");
+    if (values[i].amb1 > AMB_ERR_THRESH)
+      client.println("<font color=\"#f00\">");
+    client.println(values[i].amb1);
+    if (values[i].amb1 > IR_ERR_THRESH)
+      client.println("</font>");    
+    client.println("</span></td>");
+    
+    client.println("</tr>");
+  }
+
+  client.println("</body>");
 }
