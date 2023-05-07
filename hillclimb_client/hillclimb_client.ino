@@ -122,7 +122,7 @@ void send_sms_gsm_uart();
 /*******************************************************/
 void setup() 
 {
-  Serial.begin(115200);
+  Serial.begin(115200);  // UART0
 #if !defined(USE_SERIAL0_DEBUG) // Daca folosim UART1 pentru debug (USE_SERIAL0_DEBUG -> nedefinit), atunci
   Serial1.begin(115200);  // e necesar sa initializam si pe UART1
 #endif
@@ -143,7 +143,7 @@ void setup()
 void loop() 
 {
 
-  if (!action_flag) // Daca timer-ul hardware nu a fost apelat, atunci valoarea este 'false'
+  if (action_flag == false) // Daca timer-ul hardware nu a fost apelat, atunci valoarea este 'false'
     return;
 
   action_flag = false;
@@ -321,8 +321,8 @@ void send_sms_gsm_uart()
       sms_content += String(amb_temp_val[i]) + " ";
 
     Serial.print("AT+CMGS=\"" + String(GSM_DEST_NUMBER) + "\"\r");
-    delay(50);
-    Serial.print(sms_content + "\r");
+    delay(50);  // delay 50ms
+    Serial.print(sms_content + "\r"); 
     delay(50);
     Serial.write(0x1a);
 

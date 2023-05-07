@@ -64,11 +64,6 @@ char *pass = "Parola 9 & Puternica";
 #define GSM_NUM_SENSOR_VALUES 5 // Numar de valori primite prin fiecare mesaj text
 
 /*******************************************************/
-/****************** Globale modul GSM  *****************/
-/*******************************************************/
-unsigned int gsm_counter = 0;
-
-/*******************************************************/
 /************* Declarare functii modul GSM *************/
 /*******************************************************/
 void setup_gsm_uart();
@@ -84,13 +79,11 @@ void setup()
 #ifndef USE_SERIAL0_DEBUG // Daca folosim UART1 pentru debug (USE_SERIAL0_DEBUG -> nedefinit), atunci
   Serial1.begin(115200);  // e necesar sa initializam si pe UART1
 #endif
-  Wire.begin(); //Joing I2C bus
   Serial.println();
 
   wifi_setup();
 
   setup_gsm_uart();
-
 }
 
 /*******************************************************/
@@ -237,14 +230,14 @@ void wifi_setup(void) {
   LOG.print("<SSID>");
   WiFi.begin(ssid, pass);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(500);  // 500ms
     LOG.print(".");
   }
 
-  server.begin();
+  server.begin();  // pornire server web
   LOG.println();
   LOG.println("setup: " + String(__func__)  + " OK");
-  LOG.println(WiFi.localIP());
+  LOG.println(WiFi.localIP()); // afiseaza in consola debug IP-ul obtinut
 }
 
 /*******************************************************/
