@@ -36,6 +36,11 @@ struct SensorsData {
 #define IR_ERR_THRESH   25
 
 /*******************************************************/
+/******************** Macros WiFi **********************/
+/*******************************************************/
+#define MAX_WIFI_RETRIES 30
+
+/*******************************************************/
 /*********** Globale vector stocare date  **************/
 /*******************************************************/
 unsigned int arrindex = 0;
@@ -53,10 +58,10 @@ void wifi_process(void);
 /*******************************************************/
 WiFiServer server(80);
 String header;
-//char *ssid = "AndroidAP473C";
-//char *pass = "vywg1169";
-char *ssid = "Digi-Fara-Filaj-Adica-Safe";
-char *pass = "Parola 9 & Puternica";
+char *ssid = "AccessPoint";
+char *pass = "12345678";
+int wifi_counter = 0;
+
 
 /*******************************************************/
 /****************** Macros modul GSM *******************/
@@ -80,6 +85,8 @@ void setup()
   Serial1.begin(115200);  // e necesar sa initializam si pe UART1
 #endif
   Serial.println();
+
+  LOG.println();
 
   wifi_setup();
 
@@ -227,11 +234,18 @@ void wifi_setup(void) {
   //Conectarea la Wi-FI si verificarea si afisarea Ip-ului in monitorul serial.
   LOG.print("Se conecteaza la retea ");
 //  Serial.println(ssid);
-  LOG.print("<SSID>");
+  LOG.print(ssid);
   WiFi.begin(ssid, pass);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED && wifi_counter < MAX_WIFI_RETRIES) {
     delay(500);  // 500ms
     LOG.print(".");
+    wifi_counter++;
+  }
+
+  if (wifi_counter == MAX_WIFI_RETRIES) {
+    LOG.println("Conectarea la retea a esuat");
+    LOG.println("setup: " + String(__func__)  + " OK");
+    return;
   }
 
   server.begin();  // pornire server web
