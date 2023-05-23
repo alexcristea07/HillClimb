@@ -1,10 +1,3 @@
-
-#include <Wire.h> // I2C library
-#include <SparkFunMLX90614.h> 
-#include "DHT.h"  
-
-#include <LiquidCrystal_I2C.h>
-
 #include <Ticker.h>
 
 #include <ESP8266WiFi.h>
